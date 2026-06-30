@@ -1,0 +1,23 @@
+# Privacy backstop — personal health data must never be committed
+*.zip
+*.db
+*.db-wal
+*.db-shm
+export.xml
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

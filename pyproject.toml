@@ -1,0 +1,62 @@
+[project]
+name = "apple-health-export-mcp"
+dynamic = ["version"]
+description = "MCP server to query an exported Apple Health archive (export.zip) via SQLite."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Burak Dirin" }]
+keywords = ["mcp", "apple-health", "fastmcp", "healthkit", "quantified-self"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Healthcare Industry",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Typing :: Typed",
+]
+dependencies = [
+    "fastmcp>=3.4",
+]
+
+[project.scripts]
+# Bare command starts the stdio MCP server (Pattern B — matches every reference
+# server; fewest process layers; exits on stdin EOF). Ingest is a separate script.
+apple-health-export-mcp = "apple_health_export_mcp.server:main"
+apple-health-export-mcp-ingest = "apple_health_export_mcp.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/burakdirin/apple-health-export-mcp"
+Repository = "https://github.com/burakdirin/apple-health-export-mcp"
+Issues = "https://github.com/burakdirin/apple-health-export-mcp/issues"
+Changelog = "https://github.com/burakdirin/apple-health-export-mcp/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/apple_health_export_mcp/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/apple_health_export_mcp"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]  # sample export XML lines are intrinsically long
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
