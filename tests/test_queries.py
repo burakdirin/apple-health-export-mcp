@@ -36,9 +36,9 @@ def test_quantity_sum_and_avg_by_day():
     conn.commit()
 
     s = queries.quantity(conn, t, "2026-06-18", "2026-06-19", "sum", "day")
-    assert [(r["period"], r["value"]) for r in s] == [("2026-06-18", 1500.0), ("2026-06-19", 300.0)]
+    assert [(r.period, r.value) for r in s] == [("2026-06-18", 1500.0), ("2026-06-19", 300.0)]
     a = queries.quantity(conn, t, "2026-06-18", "2026-06-18", "avg", "all")
-    assert a[0]["value"] == 750.0 and a[0]["period"] == "all"
+    assert a[0].value == 750.0 and a[0].period == "all"
 
 
 def test_sum_dedupes_parallel_sources_by_dominant_per_day():
@@ -55,16 +55,16 @@ def test_sum_dedupes_parallel_sources_by_dominant_per_day():
     conn.commit()
 
     out = queries.quantity(conn, t, "2026-06-18", "2026-06-19", "sum", "day")
-    by_day = {r["period"]: r["value"] for r in out}
+    by_day = {r.period: r.value for r in out}
     assert by_day["2026-06-18"] == 6000.0  # Watch only, NOT 6000+5800
     assert by_day["2026-06-19"] == 4321.0  # Huawei era kept
 
     # Escape hatch: forcing iPhone gives its own sum.
     forced = queries.quantity(conn, t, "2026-06-18", "2026-06-18", "sum", "day", source="BurakD iPhone")
-    assert forced[0]["value"] == 5800.0
+    assert forced[0].value == 5800.0
     # avg is NOT deduped (all 6 samples count) — sanity that non-sum path is untouched.
     avg = queries.quantity(conn, t, "2026-06-18", "2026-06-18", "avg", "all")
-    assert avg[0]["n"] == 5
+    assert avg[0].n == 5
 
 
 def test_sleep_stage_durations_attributed_to_wake_day():
@@ -85,7 +85,7 @@ def test_sleep_stage_durations_attributed_to_wake_day():
     out = queries.sleep(conn, "2026-06-19", "2026-06-19")
     assert len(out) == 1
     night = out[0]
-    assert night["night"] == "2026-06-19"
-    assert night["asleep_min"] == 150.0  # core 120 + deep 30
-    assert night["deep_min"] == 30.0
-    assert night["awake_min"] == 10.0
+    assert night.night == "2026-06-19"
+    assert night.asleep_min == 150.0  # core 120 + deep 30
+    assert night.deep_min == 30.0
+    assert night.awake_min == 10.0

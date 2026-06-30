@@ -78,7 +78,7 @@ def _store():
 
 
 @mcp.tool(annotations=READONLY)
-def list_types() -> list[dict]:
+def list_types() -> list[queries.TypeInfo]:
     """List which health metrics exist in this export, with row counts and date spans.
 
     Call this first to discover the exact `type` strings to pass to `get_quantity`.
@@ -88,7 +88,7 @@ def list_types() -> list[dict]:
 
 
 @mcp.tool(annotations=READONLY)
-def list_sources(type: TypeId) -> list[dict]:
+def list_sources(type: TypeId) -> list[queries.SourceInfo]:
     """List which sources/devices wrote a metric, with counts and date spans.
 
     Use it to see why a `sum` differs across devices, or to pick a `source` for `get_quantity`.
@@ -105,7 +105,7 @@ def get_quantity(
     agg: Agg = "sum",
     bucket: Bucket = "day",
     source: Source = None,
-) -> list[dict]:
+) -> list[queries.QuantityPoint]:
     """Aggregate a numeric metric (steps, weight, heart rate, energy…) over a date range.
 
     Call `list_types` first to find the exact `type` string. Pick `agg` by metric kind:
@@ -122,7 +122,7 @@ def get_quantity(
 
 
 @mcp.tool(annotations=READONLY)
-def get_sleep(start: DateStr, end: DateStr) -> list[dict]:
+def get_sleep(start: DateStr, end: DateStr) -> list[queries.SleepNight]:
     """Per-night sleep stage durations (minutes), attributed to the wake-up day.
 
     Returns [{night, asleep_min, rem_min, deep_min, core_min, awake_min, in_bed_min}].
@@ -133,7 +133,7 @@ def get_sleep(start: DateStr, end: DateStr) -> list[dict]:
 
 
 @mcp.tool(annotations=READONLY)
-def get_workouts(start: DateStr, end: DateStr) -> list[dict]:
+def get_workouts(start: DateStr, end: DateStr) -> list[queries.WorkoutSummary]:
     """Workout summary per activity type in a date range: count, total & avg minutes."""
     with _store() as conn:
         return queries.workouts(conn, start, end)

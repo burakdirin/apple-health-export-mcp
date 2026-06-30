@@ -8,6 +8,60 @@ offset before julianday(); start/end share an offset so the diff is correct.
 from __future__ import annotations
 
 import sqlite3
+from dataclasses import dataclass
+
+
+@dataclass
+class TypeInfo:
+    """A metric present in the data, with its row count and date span."""
+
+    type: str
+    n: int
+    first: str | None
+    last: str | None
+
+
+@dataclass
+class SourceInfo:
+    """A device/app that wrote a metric, with its row count and date span."""
+
+    source: str | None
+    n: int
+    first: str | None
+    last: str | None
+
+
+@dataclass
+class QuantityPoint:
+    """One bucket of an aggregated numeric metric."""
+
+    period: str
+    value: float
+    n: int
+
+
+@dataclass
+class SleepNight:
+    """Sleep stage durations (minutes) for one night, keyed by the wake-up day."""
+
+    night: str
+    asleep_min: float
+    rem_min: float
+    deep_min: float
+    core_min: float
+    awake_min: float
+    in_bed_min: float
+
+
+@dataclass
+class WorkoutSummary:
+    """Per-activity workout totals over a range."""
+
+    activity: str
+    n: int
+    total_min: float | None
+    avg_min: float | None
+
 
 _BUCKET = {
     "day": "local_date",
@@ -25,15 +79,15 @@ _ASLEEP = (
 )
 
 
-def list_types(conn: sqlite3.Connection) -> list[dict]:
+def list_types(conn: sqlite3.Connection) -> list[TypeInfo]:
     """Discover which metrics exist in this data (ADR-0004): type, count, date span."""
     rows = conn.execute(
         "SELECT type, COUNT(*) n, MIN(local_date) first, MAX(local_date) last FROM record GROUP BY type ORDER BY n DESC"
     ).fetchall()
-    out = [dict(r) for r in rows]
+    out = [TypeInfo(r["type"], r["n"], r["first"], r["last"]) for r in rows]
     wk = conn.execute("SELECT COUNT(*) n FROM workout").fetchone()["n"]
     if wk:
-        out.append({"type": "Workout", "n": wk, "first": None, "last": None})
+        out.append(TypeInfo("Workout", wk, None, None))
     return out
 
 
@@ -45,7 +99,7 @@ def quantity(
     agg: str = "sum",
     bucket: str = "day",
     source: str | None = None,
-) -> list[dict]:
+) -> list[QuantityPoint]:
     """Aggregate a numeric metric over a date range.
 
     `sum` is de-duplicated: the same activity is logged in parallel by multiple
@@ -84,7 +138,7 @@ def quantity(
             """,
             (type, start, end),
         ).fetchall()
-        return [dict(r) for r in rows]
+        return [QuantityPoint(r["period"], r["value"], r["n"]) for r in rows]
 
     expr = "COUNT(*)" if agg == "count" else f"{agg}(CAST(value AS REAL))"
     rows = conn.execute(
@@ -93,20 +147,20 @@ def quantity(
         f"GROUP BY {b} ORDER BY period",
         (type, start, end, *src_arg),
     ).fetchall()
-    return [dict(r) for r in rows]
+    return [QuantityPoint(r["period"], r["value"], r["n"]) for r in rows]
 
 
-def list_sources(conn: sqlite3.Connection, type: str) -> list[dict]:
+def list_sources(conn: sqlite3.Connection, type: str) -> list[SourceInfo]:
     """Which sources wrote a given type, with counts — for transparency / `source=` use."""
     rows = conn.execute(
         "SELECT source, COUNT(*) n, MIN(local_date) first, MAX(local_date) last "
         "FROM record WHERE type=? GROUP BY source ORDER BY n DESC",
         (type,),
     ).fetchall()
-    return [dict(r) for r in rows]
+    return [SourceInfo(r["source"], r["n"], r["first"], r["last"]) for r in rows]
 
 
-def sleep(conn: sqlite3.Connection, start: str, end: str) -> list[dict]:
+def sleep(conn: sqlite3.Connection, start: str, end: str) -> list[SleepNight]:
     """Per-night sleep, attributed to the wake-up local day (end date).
 
     Reports minutes per stage. Legacy nights may only have InBed (older devices),
@@ -133,10 +187,21 @@ def sleep(conn: sqlite3.Connection, start: str, end: str) -> list[dict]:
         """,
         (*_ASLEEP, start, end),
     ).fetchall()
-    return [{k: (round(v, 1) if isinstance(v, float) else v) for k, v in dict(r).items()} for r in rows]
+    return [
+        SleepNight(
+            night=r["night"],
+            asleep_min=round(r["asleep_min"], 1),
+            rem_min=round(r["rem_min"], 1),
+            deep_min=round(r["deep_min"], 1),
+            core_min=round(r["core_min"], 1),
+            awake_min=round(r["awake_min"], 1),
+            in_bed_min=round(r["in_bed_min"], 1),
+        )
+        for r in rows
+    ]
 
 
-def workouts(conn: sqlite3.Connection, start: str, end: str) -> list[dict]:
+def workouts(conn: sqlite3.Connection, start: str, end: str) -> list[WorkoutSummary]:
     """Per-activity workout summary in range: count, total & avg minutes."""
     rows = conn.execute(
         """
@@ -148,4 +213,4 @@ def workouts(conn: sqlite3.Connection, start: str, end: str) -> list[dict]:
         """,
         (start, end),
     ).fetchall()
-    return [dict(r) for r in rows]
+    return [WorkoutSummary(r["activity"], r["n"], r["total_min"], r["avg_min"]) for r in rows]

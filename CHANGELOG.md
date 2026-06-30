@@ -6,6 +6,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Tools now return typed dataclass models instead of bare dicts, so each tool
+  publishes a JSON **output schema** (`structuredContent` is unchanged). Clients
+  can validate fields and see the shape up front.
+
 ## [0.1.0]
 
 ### Added
