@@ -27,7 +27,7 @@ export.zip ──(ingest, one-time ~1-3 min)──► health.db (SQLite) ──�
 
    ```bash
    uv tool install apple-health-export-mcp
-   # …or before it's on PyPI, from GitHub:
+   # …or from source:
    uv tool install git+https://github.com/burakdirin/apple-health-export-mcp
    ```
 
@@ -93,15 +93,17 @@ and the most reliable cleanup. `fastmcp run fastmcp.json` is for local dev only.
 
 ## Tools
 
-| Tool                                          | Returns                                                                  |
-| --------------------------------------------- | ------------------------------------------------------------------------ |
-| `list_types()`                                | Which metrics exist in _your_ data + row counts (discovery)              |
-| `get_quantity(type, start, end, agg, bucket)` | Daily/weekly aggregate for a numeric metric (steps, heart rate, weight…) |
-| `get_sleep(start, end)`                       | Per-night sleep stage durations                                          |
-| `get_workouts(start, end)`                    | Workouts in the range                                                    |
+| Tool                                                  | Returns                                                                     |
+| ----------------------------------------------------- | --------------------------------------------------------------------------- |
+| `list_types()`                                        | Which metrics exist in _your_ data + row counts and date spans (discovery)  |
+| `list_sources(type)`                                  | Which devices/apps wrote a metric (counts, date spans)                      |
+| `get_quantity(type, start, end, agg, bucket, source)` | Per day/week/month/all aggregate for a numeric metric (steps, HR, weight…)  |
+| `get_sleep(start, end)`                               | Per-night sleep stage durations                                             |
+| `get_workouts(start, end)`                            | Workout summary per activity type in the range                              |
 
 All query tools require a date range and return **aggregates only** — never raw rows (ADR-0008).
-`get_quantity` with `agg="sum"` auto-deduplicates parallel devices (Watch + iPhone + apps) so totals aren't inflated (ADR-0010); pass `source` to force one device.
+`get_quantity` with `agg="sum"` auto-deduplicates parallel devices (Watch + iPhone + apps) so totals
+aren't inflated (ADR-0010); pass `source` (see `list_sources`) to force one device.
 
 ## Prompts
 
