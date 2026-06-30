@@ -32,9 +32,10 @@ apple-health-export-mcp                        # run the stdio server (reads the
 
 Layering is deliberate — keep it:
 
-- **`queries.py`** — pure SQL helpers, **no FastMCP import**. This is where all query logic and the unit tests live. Anything non-trivial goes here so it stays testable without a server.
-- **`server.py`** — thin FastMCP wrappers over `queries.py` (the `@mcp.tool` functions) plus prompt registration. Tools open the DB via the `_store()` context manager and translate `ValueError`/missing-DB into `ToolError`. Reusable `Annotated[..., Field(...)]` argument types are defined at the top.
-- **`prompts.py`** — coaching prompt **content** as plain (un-decorated) functions exported via `ALL`; `server.py` registers them with `mcp.prompt(fn)`. Kept decorator-free to avoid importing the `mcp` instance (no circular import).
+- **`queries.py`** — pure SQL helpers + the typed result dataclasses (`TypeInfo`, `QuantityPoint`, `SleepNight`, …), **no FastMCP import**. All query logic and the unit tests live here so it stays testable without a server.
+- **`tools.py`** — the MCP tool surface: thin wrappers over `queries.py`, the `_store()` context manager (DB open/close + `ValueError`/missing-DB → `ToolError`), and the reusable `Annotated[..., Field(...)]` argument types. Plain (un-decorated) functions exported via `ALL`.
+- **`prompts.py`** — coaching prompt **content** as plain functions exported via `ALL`.
+- **`server.py`** — wiring only: creates the `mcp` instance, registers `tools.ALL` (`mcp.tool(annotations=READONLY)`) and `prompts.ALL` (`mcp.prompt`), and holds `main()` + shutdown. `tools.py`/`prompts.py` stay decorator-free so they never import the `mcp` instance (no circular import); returning typed models lets FastMCP emit an output schema per tool.
 - **`ingest.py`** — streaming `iterparse` of the export XML into SQLite; the one-time builder.
 - **`db.py`** — schema + `connect()` + `db_path()` (env/XDG resolution).
 - **`cli.py`** — the `apple-health-export-mcp-ingest` entry point.
