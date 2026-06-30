@@ -6,10 +6,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-30
+
 ### Changed
 - Tools now return typed dataclass models instead of bare dicts, so each tool
   publishes a JSON **output schema** (`structuredContent` is unchanged). Clients
   can validate fields and see the shape up front.
+- Internal: extracted the tool surface into `tools.py` (mirrors `prompts.py`), so
+  `server.py` is wiring only. No behavior change.
 
 ## [0.1.0]
 
@@ -28,5 +32,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Coaching prompts: `daily_summary`, `weekly_review`, `monthly_summary`,
   `yearly_summary`, `readiness_check`, `sleep_report`.
 
-[Unreleased]: https://github.com/burakdirin/apple-health-export-mcp/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/burakdirin/apple-health-export-mcp/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/burakdirin/apple-health-export-mcp/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/burakdirin/apple-health-export-mcp/releases/tag/v0.1.0
