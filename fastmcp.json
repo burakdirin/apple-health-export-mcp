@@ -1,0 +1,16 @@
+{
+  "$schema": "https://gofastmcp.com/public/schemas/fastmcp.json/v1.json",
+  "source": {
+    "path": "src/apple_health_export_mcp/server.py",
+    "entrypoint": "mcp"
+  },
+  "environment": {
+    "project": "."
+  },
+  "deployment": {
+    "transport": "stdio",
+    "env": {
+      "AH_DB_PATH": "${AH_DB_PATH}"
+    }
+  }
+}
